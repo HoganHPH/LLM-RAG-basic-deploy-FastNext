@@ -2,3 +2,11 @@ uvicorn
 fastapi
 python-dotenv
 pydantic
+pypdf
+langchain-community
+langchain_huggingface
+langchain-mongodb 
+pymongo
+llama-cpp-python
+gpt4all
+gpt4all[cuda]
