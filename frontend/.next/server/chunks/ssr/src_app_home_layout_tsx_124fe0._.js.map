@@ -1,0 +1,7 @@
+{
+  "version": 3,
+  "sources": [],
+  "sections": [
+    {"offset": {"line": 7, "column": 0}, "map": {"version":3,"sources":["file://W%3A/CODE_EVERYTHING/PROJ/RAG-basic-deploy-FastNext/frontend/src/app/home/layout.tsx"],"sourcesContent":["import type { Metadata } from \"next\";\r\n\r\n\r\nexport const metadata: Metadata = {\r\n    title: \"Basic RAG\",\r\n    description: \"Basic RAG\",\r\n};\r\n\r\nexport default function RootLayout({\r\n    children,\r\n}: Readonly<{\r\n    children: React.ReactNode;\r\n}>) {\r\n    return (\r\n        <>{children}</>\r\n    );\r\n}\r\n"],"names":[],"mappings":";;;;;;AAGO,MAAM,WAAqB;IAC9B,OAAO;IACP,aAAa;AACjB;AAEe,SAAS,WAAW,EAC/B,QAAQ,EAGV;IACE,qBACI;kBAAG;;AAEX"}},
+    {"offset": {"line": 22, "column": 0}, "map": {"version":3,"sources":[],"names":[],"mappings":"A"}}]
+}
