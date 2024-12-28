@@ -38,7 +38,6 @@ def retrieve(state: State):
 def generate(state: State):
     docs_content = " ".join(doc.page_content for doc in state["context"])
     messages = prompt.invoke({"question": state["question"], "context": docs_content})
-    print(messages)
     response = chat_model.invoke(messages)
     return {"answer": response}
 
