@@ -13,7 +13,9 @@ app = FastAPI(
 
 from .routers import page_home
 from .routers import api_indexing
+from .routers import api_chat
 
 app = connect_networks(app)
 app.include_router(page_home.router)
 app.include_router(api_indexing.router)
+app.include_router(api_chat.router)

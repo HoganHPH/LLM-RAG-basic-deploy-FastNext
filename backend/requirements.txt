@@ -10,3 +10,5 @@ pymongo
 llama-cpp-python
 gpt4all
 gpt4all[cuda]
+ctransformers
+langgraph

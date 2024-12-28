@@ -13,6 +13,14 @@ UPLOAD_DIR.mkdir(exist_ok=True)  # Ensure the upload directory exists
 
 MODEL_DIR = Path("models")
 
+embeddings_model_name = "all-MiniLM-L6-v2-Q5_K_M.gguf"
+checkpoint_embeddings_model = f"{MODEL_DIR}/{embeddings_model_name}"
+abs_path =  os.path.abspath(checkpoint_embeddings_model)
+embeddings = get_embedding_model(abs_path)
+
+vector_store = get_vector_store(embeddings=embeddings)
+
+
 router = APIRouter()
 @router.post('/api/indexing')
 async def upload_file(file: UploadFile = File(...)):
@@ -25,12 +33,6 @@ async def upload_file(file: UploadFile = File(...)):
         
         all_splits = split_chunks(docs)
         
-        embeddings_model_name = "all-MiniLM-L6-v2-Q5_K_M.gguf"
-        checkpoint_embeddings_model = f"{MODEL_DIR}/{embeddings_model_name}"
-        abs_path =  os.path.abspath(checkpoint_embeddings_model)
-        embeddings = get_embedding_model(abs_path)
-        
-        vector_store = get_vector_store(embeddings=embeddings)
         reset_vector_store = vector_store.collection.delete_many({})
         document_ids = vector_store.add_documents(documents=all_splits)
         
