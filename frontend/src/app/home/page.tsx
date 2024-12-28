@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import useSWR from 'swr';
 import { toast } from 'react-toastify';
 import Spinner from '@/components/spinner';
@@ -11,11 +11,12 @@ const fetcher = (url: string) => fetch(url).then((r) => r.json());
 export default function HomePage() {
     const [msg, setMsg] = useState<string>("Loading...");
     const [file, setFile] = useState<File | null>(null);
-    const [message, setMessage] = useState<string>("");
     const [chatMessages, setChatMessages] = useState<{ sender: string; text: string }[]>([]);
     const [loading, setLoading] = useState<boolean>(false);
+    const [chatLoading, setChatLoading] = useState<boolean>(false);
     const [showStartBtn, setShowStartBtn] = useState<boolean>(false);
-    const [showChatBox, setshowChatBox] = useState<boolean>(false);
+    const [showChatBox, setShowChatBox] = useState<boolean>(false);
+    const chatboxRef = useRef<{ resetChatbox: () => void } | null>(null);
 
     const { data, error, isLoading } = useSWR('http://localhost:8000', fetcher);
 
@@ -32,20 +33,22 @@ export default function HomePage() {
     const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
         if (event.target.files && event.target.files.length > 0) {
             setFile(event.target.files[0]);
-            setMessage(""); // Reset the message when a new file is selected
+            setShowStartBtn(false);
+            setShowChatBox(false);
+            if (chatboxRef.current) chatboxRef.current.resetChatbox();
         }
     };
 
     const handleUpload = async () => {
         if (!file) {
-            toast.warning("Please select a file")
+            toast.warning("Please select a file");
             return;
         }
 
         const formData = new FormData();
         formData.append("file", file);
 
-        setLoading(true); // Show spinner
+        setLoading(true);
         try {
             const response = await fetch("http://localhost:8000/api/indexing", {
                 method: "POST",
@@ -53,37 +56,36 @@ export default function HomePage() {
             });
 
             if (response.ok) {
-                const responseData = await response.json();
-                toast.success("Indexing successful!")
+                toast.success("Indexing successful!");
                 setShowStartBtn(true);
             } else {
-                toast.error("Failed to upload file.")
+                toast.error("Failed to upload file.");
             }
         } catch (error) {
             console.error("Upload error:", error);
-            toast.warning("An error occurred during upload.")
+            toast.error("An error occurred during upload.");
         } finally {
-            setLoading(false); // Hide spinner
+            setLoading(false);
         }
     };
 
     const handleReset = () => {
-        setShowStartBtn(false);
-        setshowChatBox(false);
         setFile(null);
-    }
+        setChatMessages([]);
+        setShowStartBtn(false);
+        setShowChatBox(false);
+        if (chatboxRef.current) chatboxRef.current.resetChatbox();
+    };
 
     const handleStart = () => {
-        setshowChatBox(true);
-    }
+        setShowChatBox(true);
+    };
 
-    // Function to handle sending a user message to the backend
     const sendMessageToBackend = async (userMessage: string) => {
-        // Add the user message to the messages state
         setChatMessages((prevMessages) => [...prevMessages, { sender: 'User', text: userMessage }]);
+        setChatLoading(true); // Show spinner in ChatBox
 
         try {
-            // Send the message to the backend
             const response = await fetch('http://localhost:8000/api/chat', {
                 method: 'POST',
                 headers: {
@@ -94,31 +96,33 @@ export default function HomePage() {
 
             if (response.ok) {
                 const data = await response.json();
-
-                // Add the backend response to the messages state
-                setChatMessages((prevMessages) => [...prevMessages, { sender: 'Bot', text: data.reply }]);
+                setChatMessages((prevMessages) => [
+                    ...prevMessages,
+                    { sender: 'Bot', text: data.reply },
+                ]);
             } else {
-                // Handle backend error
                 setChatMessages((prevMessages) => [
                     ...prevMessages,
                     { sender: 'Bot', text: 'Something went wrong. Please try again later.' },
                 ]);
             }
         } catch (error) {
-            // Handle fetch error
             console.error('Error sending message to backend:', error);
             setChatMessages((prevMessages) => [
                 ...prevMessages,
                 { sender: 'Bot', text: 'Failed to connect to the server.' },
             ]);
+        } finally {
+            setChatLoading(false); // Hide spinner in ChatBox
         }
     };
 
     return (
         <div className="mt-5 text-2xl text-yellow-400">
             <h1 className="text-center mt-10 font-bold">{msg}</h1>
-            {!showStartBtn &&
-                <div className="my-10 flex flex-col items-center justify-center gap-4 bg-gray-100 p-8 rounded-lg shadow-md max-w-lg mx-auto">
+
+            {!showStartBtn && (
+                <div className="my-10 flex flex-col items-center justify-center gap-4 bg-gray-100 p-4 rounded-lg shadow-md max-w-lg mx-auto">
                     <input
                         type="file"
                         accept="application/pdf"
@@ -127,38 +131,49 @@ export default function HomePage() {
                         file:mr-4 file:py-2 file:px-4
                         file:rounded-lg file:border-0
                         file:text-sm file:font-semibold
-                        file:bg-blue-50 file:text-blue-700
-                        hover:file:bg-blue-100
+                        file:bg-blue-200 file:text-blue-700
+                        hover:file:bg-blue-300
                         focus:outline-none"
                     />
                     <button
                         onClick={handleUpload}
-                        disabled={loading} // Disable button when loading
-                        className={`bg-blue-600 text-white font-bold py-2 px-6 rounded-lg shadow transition duration-200 focus:outline-none focus:ring-2 focus:ring-blue-400 focus:ring-offset-2 ${loading ? "opacity-50 cursor-not-allowed" : "hover:bg-blue-700"
+                        disabled={loading}
+                        className={`bg-blue-600 text-white text-lg font-bold py-2 px-6 rounded-lg shadow transition duration-200 focus:outline-none focus:ring-2 focus:ring-blue-400 focus:ring-offset-2 ${loading ? "opacity-50 cursor-not-allowed" : "hover:bg-blue-700"
                             }`}
                     >
                         {loading ? "Processing..." : "Indexing"}
                     </button>
-                    {loading && <Spinner />} {/* Show spinner while loading */}
-                    {message && (
-                        <p className="mt-4 text-center text-gray-600 font-medium">{message}</p>
+                    {loading && <Spinner />}
+                </div>
+            )}
+
+            {showStartBtn &&
+                <div className="flex justify-center content-center my-10">
+                    <button
+                        onClick={handleReset}
+                        className="mx-3 bg-orange-600 text-white font-bold py-2 px-6 rounded-lg shadow hover:bg-orange-700"
+                    >
+                        Reset
+                    </button>
+                    {!showChatBox && showStartBtn && (
+                        <button
+                            onClick={handleStart}
+                            className="mx-3 bg-green-600 text-white font-bold py-2 px-6 rounded-lg shadow hover:bg-green-700"
+                        >
+                            Start
+                        </button>
                     )}
                 </div>
             }
-            {showStartBtn &&
-                <div className='flex justify-center content-center my-10'>
-                    <button onClick={handleReset} className="mx-3 bg-orange-600 text-white font-bold py-2 px-6 rounded-lg shadow hover:bg-orange-700">Reset</button>
-                    {!showChatBox &&
-                        <button onClick={handleStart} className="mx-3 bg-green-600 text-white font-bold py-2 px-6 rounded-lg shadow hover:bg-green-700">Start</button>
-                    }
-                </div>
-            }
 
-            {showChatBox &&
+            {showChatBox && (
                 <ChatBox
-                    chatMessages={chatMessages} onSendMessage={sendMessageToBackend}
+                    ref={chatboxRef}
+                    chatMessages={chatMessages}
+                    onSendMessage={sendMessageToBackend}
+                    chatLoading={chatLoading}
                 />
-            }
+            )}
         </div>
     );
 }
