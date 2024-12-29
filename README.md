@@ -1,9 +1,11 @@
 <h1>LLM Retrieval Augmented Generation (RAG) - Basic application with FastAPI, NextJS and MongoDB</h1>
 <p><b>A basic simulation of RAG system using MongoDB deployed by FastAPI and NextJS </b></p>
+
 ![til](./assets/demo.gif)
 
 <h2>Key concept:</h2>
-![image]([https://github.com/user-attachments/assets/67bc6f45-c3ef-47f2-b2b8-d3fdad5afc46](https://github.com/HoganHPH/LLM-RAG-basic-deploy-FastNext/blob/main/assets/basic_rag.png))
+
+![image](./assets/basic_rag.png)
 
 <h3>Retrieval Augmented Generation (RAG)</h3>
 <p><b>There are 5 key components in a basic RAG:</b></p>
